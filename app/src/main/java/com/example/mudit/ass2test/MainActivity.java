@@ -1,12 +1,18 @@
 package com.example.mudit.ass2test;
 
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.ImageView;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -23,6 +29,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         imageView = (ImageView) findViewById(R.id.activityimage);
+        MybroadcastReceiever mybroadcastReceiever = new MybroadcastReceiever();
+        LocalBroadcastManager.getInstance(this).registerReceiver(mybroadcastReceiever,new IntentFilter("ACTION"));
         googleApiClient = new GoogleApiClient.Builder(this)
                 .addApi(ActivityRecognition.API)
                 .addConnectionCallbacks(this)
@@ -47,8 +55,28 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         Toast.makeText(getApplicationContext(),"Connection to Google API Failed", Toast.LENGTH_LONG).show();
     }
 
-    public static void ActivityStill()
+    public class MybroadcastReceiever extends BroadcastReceiver
     {
-        imageView.setImageResource(R.drawable.lotus_position);
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.e("MainActivity", "Inside onRecieve");
+            String act = intent.getStringExtra("activity");
+            switch(act){
+                case "STILL": imageView.setImageResource(R.drawable.still);
+                break;
+
+                case "WALK": imageView.setImageResource(R.drawable.walking);
+                    break;
+
+                case "RUN": imageView.setImageResource(R.drawable.man_running);
+                    break;
+
+                case "IN VEHICLE": imageView.setImageResource(R.drawable.vehicle);
+                    break;
+                default:
+                    Toast.makeText(context,"Unknown Activity",Toast.LENGTH_LONG).show();
+                    break;
+            }
+        }
     }
 }
