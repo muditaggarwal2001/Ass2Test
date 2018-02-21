@@ -42,15 +42,13 @@ public class ActivityRecognizedService extends IntentService {
             System.out.println("insideOnhandlemethod");
             actionIntent = new Intent();
             actionIntent.setAction("ACTION");
-            handleactivity(result.getProbableActivities());
+            handleactivity(result.getMostProbableActivity());
         }
 
     }
 
-    private void handleactivity(List<DetectedActivity> probableActivities) {
-        for (DetectedActivity activity : probableActivities)
-        {
-            switch (activity.getType())
+    private void handleactivity(DetectedActivity probableActivities) {
+            switch (probableActivities.getType())
             {
                 case DetectedActivity.WALKING:
                     Log.d("Activityservice", "Walking");
@@ -77,7 +75,6 @@ public class ActivityRecognizedService extends IntentService {
                     actionIntent.putExtra("activity", "UNKNOWN");
                     break;
 
-            }
         }
         LocalBroadcastManager.getInstance(this).sendBroadcast(actionIntent);
     }

@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.database.Cursor;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
@@ -20,10 +21,14 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.ActivityRecognition;
 
+import java.sql.Timestamp;
+
 public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
-    static ImageView imageView;
+    private ImageView imageView;
     public GoogleApiClient googleApiClient;
     private TextView textView;
+    private Timestamp timestamp;
+    private DBHelperClass dbHelperClass;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -31,6 +36,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         imageView = (ImageView) findViewById(R.id.activityimage);
         MybroadcastReceiever mybroadcastReceiever = new MybroadcastReceiever();
         LocalBroadcastManager.getInstance(this).registerReceiver(mybroadcastReceiever,new IntentFilter("ACTION"));
+        dbHelperClass = new DBHelperClass(getApplicationContext());
+        dbHelperClass.open();
         googleApiClient = new GoogleApiClient.Builder(this)
                 .addApi(ActivityRecognition.API)
                 .addConnectionCallbacks(this)
@@ -46,6 +53,14 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        textView = (TextView) findViewById(R.id.Ctime);
+        timestamp = new Timestamp(System.currentTimeMillis());
+        textView.setText(timestamp.toString());
+    }
+
+    @Override
     public void onConnectionSuspended(int i) {
 
     }
@@ -55,28 +70,55 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         Toast.makeText(getApplicationContext(),"Connection to Google API Failed", Toast.LENGTH_LONG).show();
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        dbHelperClass.close();
+    }
+
     public class MybroadcastReceiever extends BroadcastReceiver
     {
         @Override
         public void onReceive(Context context, Intent intent) {
+            Cursor cursor = dbHelperClass.getdata();
+            if(cursor.moveToFirst())
+            {
+                timestamp = Timestamp.valueOf(cursor.getString(2));
+                Timestamp temp = new Timestamp(System.currentTimeMillis());
+                long x = temp.getTime()-timestamp.getTime();
+                timestamp = temp;
+                Toast.makeText(getApplicationContext(),cursor.getString(1)+" Ended after "+x/60000+" minutes and "+x/1000+" Seconds", Toast.LENGTH_LONG).show();
+                dbHelperClass.truncate();
+            }
             Log.e("MainActivity", "Inside onRecieve");
             String act = intent.getStringExtra("activity");
+            Intent musicIntent = new Intent("com.android.music.musicservicecommand");
+            musicIntent.putExtra("command","play");
+
             switch(act){
                 case "STILL": imageView.setImageResource(R.drawable.still);
-                break;
+                    Toast.makeText(getApplicationContext(),"STILL", Toast.LENGTH_LONG).show();
+                    break;
 
                 case "WALK": imageView.setImageResource(R.drawable.walking);
+                    Toast.makeText(getApplicationContext(),"WALKING", Toast.LENGTH_LONG).show();
+                    sendBroadcast(musicIntent);
                     break;
 
                 case "RUN": imageView.setImageResource(R.drawable.man_running);
+                    Toast.makeText(getApplicationContext(),"RUNNING", Toast.LENGTH_LONG).show();
+                    sendBroadcast(musicIntent);
                     break;
 
                 case "IN VEHICLE": imageView.setImageResource(R.drawable.vehicle);
+                    Toast.makeText(getApplicationContext(),"IN VEHICLE", Toast.LENGTH_LONG).show();
                     break;
+
                 default:
                     Toast.makeText(context,"Unknown Activity",Toast.LENGTH_LONG).show();
                     break;
             }
+            dbHelperClass.insertData(act,timestamp.toString());
         }
     }
 }
