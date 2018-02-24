@@ -73,7 +73,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        dbHelperClass.close();
+        //dbHelperClass.close();
     }
 
     public class MybroadcastReceiever extends BroadcastReceiver
