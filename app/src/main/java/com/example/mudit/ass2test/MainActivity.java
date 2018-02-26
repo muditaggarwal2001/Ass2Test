@@ -5,9 +5,14 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.location.Location;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -20,8 +25,14 @@ import android.widget.Toast;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.ActivityRecognition;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.sql.Timestamp;
+
+import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
 public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
     private ImageView imageView;
@@ -29,6 +40,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     private TextView textView;
     private Timestamp timestamp;
     private DBHelperClass dbHelperClass;
+    private MapsActivity mapsActivity;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -102,16 +114,19 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
                 case "WALK": imageView.setImageResource(R.drawable.walking);
                     Toast.makeText(getApplicationContext(),"WALKING", Toast.LENGTH_LONG).show();
+                    mapsActivity.checkLocationandAddToMap();
                     sendBroadcast(musicIntent);
                     break;
 
                 case "RUN": imageView.setImageResource(R.drawable.man_running);
                     Toast.makeText(getApplicationContext(),"RUNNING", Toast.LENGTH_LONG).show();
+                    mapsActivity.checkLocationandAddToMap();
                     sendBroadcast(musicIntent);
                     break;
 
                 case "IN VEHICLE": imageView.setImageResource(R.drawable.vehicle);
                     Toast.makeText(getApplicationContext(),"IN VEHICLE", Toast.LENGTH_LONG).show();
+                    mapsActivity.checkLocationandAddToMap();
                     break;
 
                 default:
@@ -122,3 +137,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         }
     }
 }
+
+
+
+
