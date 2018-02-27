@@ -21,12 +21,14 @@ import android.widget.ImageView;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.ActivityRecognition;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
@@ -34,13 +36,14 @@ import java.sql.Timestamp;
 
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
-public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
     private ImageView imageView;
     public GoogleApiClient googleApiClient;
     private TextView textView;
     private Timestamp timestamp;
     private DBHelperClass dbHelperClass;
-    private MapsActivity mapsActivity;
+    private static final int LOCATION_REQUEST_CODE = 101;
+    GoogleMap mMap;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -50,8 +53,11 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         LocalBroadcastManager.getInstance(this).registerReceiver(mybroadcastReceiever,new IntentFilter("ACTION"));
         dbHelperClass = new DBHelperClass(getApplicationContext());
         dbHelperClass.open();
+        SupportMapFragment mapFragment= (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+        mapFragment.getMapAsync(this);
+
         googleApiClient = new GoogleApiClient.Builder(this)
-                .addApi(ActivityRecognition.API)
+                .addApi(LocationServices.API)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this).build();
         googleApiClient.connect();
@@ -88,6 +94,50 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         //dbHelperClass.close();
     }
 
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        mMap = googleMap;
+        checkLocationandAddToMap();
+    }
+
+    public void checkLocationandAddToMap() {
+//Checking if the user has granted the permission
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+//Requesting the Location permission
+            ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_REQUEST_CODE);
+            return;
+        }
+
+//Fetching the last known location using the Fus
+        Location location = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
+
+//MarkerOptions are used to create a new Marker.You can specify location, title etc with MarkerOptions
+        MarkerOptions markerOptions = new MarkerOptions().position(new LatLng(location.getLatitude(), location.getLongitude())).title("You are Here");
+
+//Adding the created the marker on the map
+        mMap.addMarker(markerOptions);
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(location.getLatitude(), location.getLongitude())));
+        mMap.setTrafficEnabled(true);
+        mMap.animateCamera(CameraUpdateFactory.zoomIn());
+        mMap.animateCamera(CameraUpdateFactory.zoomOut());
+
+
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode) {
+            case LOCATION_REQUEST_CODE:
+                if (grantResults.length > 0 && grantResults[0] == PERMISSION_GRANTED) {
+//Permission Granted
+                    checkLocationandAddToMap();
+                } else
+                    Toast.makeText(this, "Location Permission Denied", Toast.LENGTH_SHORT).show();
+                break;
+        }
+    }
+
     public class MybroadcastReceiever extends BroadcastReceiver
     {
         @Override
@@ -109,27 +159,29 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
             switch(act){
                 case "STILL": imageView.setImageResource(R.drawable.still);
-                    Toast.makeText(getApplicationContext(),"STILL", Toast.LENGTH_LONG).show();
+                    checkLocationandAddToMap();
+                Toast.makeText(getApplicationContext(),"STILL", Toast.LENGTH_LONG).show();
                     break;
 
                 case "WALK": imageView.setImageResource(R.drawable.walking);
                     Toast.makeText(getApplicationContext(),"WALKING", Toast.LENGTH_LONG).show();
-                    mapsActivity.checkLocationandAddToMap();
+                    checkLocationandAddToMap();
                     sendBroadcast(musicIntent);
                     break;
 
                 case "RUN": imageView.setImageResource(R.drawable.man_running);
                     Toast.makeText(getApplicationContext(),"RUNNING", Toast.LENGTH_LONG).show();
-                    mapsActivity.checkLocationandAddToMap();
+                    checkLocationandAddToMap();
                     sendBroadcast(musicIntent);
                     break;
 
                 case "IN VEHICLE": imageView.setImageResource(R.drawable.vehicle);
                     Toast.makeText(getApplicationContext(),"IN VEHICLE", Toast.LENGTH_LONG).show();
-                    mapsActivity.checkLocationandAddToMap();
+                    checkLocationandAddToMap();
                     break;
 
                 default:
+
                     Toast.makeText(context,"Unknown Activity",Toast.LENGTH_LONG).show();
                     break;
             }

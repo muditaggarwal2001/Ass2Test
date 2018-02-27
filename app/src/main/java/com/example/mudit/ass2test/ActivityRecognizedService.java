@@ -42,40 +42,43 @@ public class ActivityRecognizedService extends IntentService {
             System.out.println("insideOnhandlemethod");
             actionIntent = new Intent();
             actionIntent.setAction("ACTION");
-            handleactivity(result.getMostProbableActivity());
+            handleactivity(result.getProbableActivities());
         }
 
     }
 
-    private void handleactivity(DetectedActivity probableActivities) {
-            switch (probableActivities.getType())
-            {
-                case DetectedActivity.WALKING:
-                    Log.d("Activityservice", "Walking");
-                    actionIntent.putExtra("activity", "WALK");
-                    break;
+    private void handleactivity(List<DetectedActivity> probableActivities) {
+            for (DetectedActivity activity : probableActivities) {
+                if (activity.getConfidence() > 70) {
+                    switch (activity.getType()) {
+                        case DetectedActivity.WALKING:
+                            Log.d("Activityservice", "Walking");
+                            actionIntent.putExtra("activity", "WALK");
+                            break;
 
-                case DetectedActivity.STILL:
-                    Log.d("Activityservice", "Sitting Still");
-                    actionIntent.putExtra("activity", "STILL");
-                    break;
+                        case DetectedActivity.STILL:
+                            Log.d("Activityservice", "Sitting Still");
+                            actionIntent.putExtra("activity", "STILL");
+                            break;
 
-                case DetectedActivity.RUNNING:
-                    Log.d("Activityservice", "Running");
-                    actionIntent.putExtra("activity", "RUN");
-                    break;
+                        case DetectedActivity.RUNNING:
+                            Log.d("Activityservice", "Running");
+                            actionIntent.putExtra("activity", "RUN");
+                            break;
 
-                case DetectedActivity.IN_VEHICLE:
-                    Log.d("Activityservice", "In Vehicle");
-                    actionIntent.putExtra("activity", "IN VEHICLE");
-                    break;
+                        case DetectedActivity.IN_VEHICLE:
+                            Log.d("Activityservice", "In Vehicle");
+                            actionIntent.putExtra("activity", "IN VEHICLE");
+                            break;
 
-                default:
-                    Log.d("Activityservice", "Unknown");
-                    actionIntent.putExtra("activity", "UNKNOWN");
-                    break;
+                        default:
+                            Log.d("Activityservice", "Unknown");
+                            actionIntent.putExtra("activity", "UNKNOWN");
+                            break;
 
-        }
+                    }
+                }
+            }
         LocalBroadcastManager.getInstance(this).sendBroadcast(actionIntent);
     }
 }
