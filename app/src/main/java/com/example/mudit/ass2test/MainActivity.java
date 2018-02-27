@@ -11,14 +11,11 @@ import android.location.Location;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.FragmentActivity;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.ImageView;
-import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.google.android.gms.common.ConnectionResult;
@@ -91,6 +88,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        googleApiClient.disconnect();
         //dbHelperClass.close();
     }
 
@@ -112,15 +110,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         Location location = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
 
 //MarkerOptions are used to create a new Marker.You can specify location, title etc with MarkerOptions
-        MarkerOptions markerOptions = new MarkerOptions().position(new LatLng(location.getLatitude(), location.getLongitude())).title("You are Here");
-
+        //MarkerOptions markerOptions = new MarkerOptions().position(new LatLng(location.getLatitude(), location.getLongitude())).title("You are Here");
+        mMap.setMyLocationEnabled(true);
 //Adding the created the marker on the map
-        mMap.addMarker(markerOptions);
+        //mMap.addMarker(markerOptions);
         mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(location.getLatitude(), location.getLongitude())));
-        mMap.setTrafficEnabled(true);
-        mMap.animateCamera(CameraUpdateFactory.zoomIn());
-        mMap.animateCamera(CameraUpdateFactory.zoomOut());
-
+        mMap.getMaxZoomLevel();
 
     }
 
@@ -132,8 +127,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 if (grantResults.length > 0 && grantResults[0] == PERMISSION_GRANTED) {
 //Permission Granted
                     checkLocationandAddToMap();
-                } else
-                    Toast.makeText(this, "Location Permission Denied", Toast.LENGTH_SHORT).show();
+                } //else
+                   // Toast.makeText(this, "Location Permission Denied", Toast.LENGTH_SHORT).show();
                 break;
         }
     }

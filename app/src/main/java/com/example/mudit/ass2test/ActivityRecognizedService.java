@@ -48,6 +48,7 @@ public class ActivityRecognizedService extends IntentService {
     }
 
     private void handleactivity(List<DetectedActivity> probableActivities) {
+        int flag=1;
             for (DetectedActivity activity : probableActivities) {
                 if (activity.getConfidence() > 70) {
                     switch (activity.getType()) {
@@ -77,8 +78,11 @@ public class ActivityRecognizedService extends IntentService {
                             break;
 
                     }
+                    flag=0;
                 }
             }
+            if (flag==1)
+                actionIntent.putExtra("activity", "STILL");
         LocalBroadcastManager.getInstance(this).sendBroadcast(actionIntent);
     }
 }
